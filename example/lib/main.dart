@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_rtmp/flutter_rtmp.dart';
+import 'package:screen/screen.dart';
 
 void main() => runApp(FirstScreen());
 
@@ -40,24 +41,44 @@ class FirstWidget extends StatelessWidget {
   }
 }
 
-class _MyAppState extends State<MyApp> {
-  RtmpManager _manager;
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  RtmpManager rtmpManager;
   int count = 0;
   Timer _timer;
-  String rtmpUrl = "rtmp://54.76.63.113:1935/livestream/16b7a176-83c8-11ea-8767-4f4b8e85dd39";
+  String rtmpUrl =
+      "rtmp://34.243.51.176:1935/livestream/5ee89f5e-8468-11ea-bb7e-1b7127419aaa";
 
   @override
   void initState() {
-    _manager = RtmpManager(onCreated: () {
+    rtmpManager = RtmpManager(onCreated: () {
       print("--- view did created ---");
     });
     super.initState();
+    Screen.keepOn(true);
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (AppLifecycleState.inactive == state) {
+      rtmpManager.stopLiveStream();
+    }
+    if (AppLifecycleState.paused == state) {
+      Screen.keepOn(false);
+      rtmpManager.stopLiveStream();
+    }
+    if (AppLifecycleState.resumed == state) {
+      Screen.keepOn(true);
+      rtmpManager.startCamera();
+    }
   }
 
   @override
   Future<void> dispose() async {
-    _manager.dispose();
-    _manager = null;
+    Screen.keepOn(false);
+    WidgetsBinding.instance.removeObserver(this);
+    rtmpManager.dispose();
+    rtmpManager = null;
     super.dispose();
   }
 
@@ -70,7 +91,7 @@ class _MyAppState extends State<MyApp> {
             fit: StackFit.expand,
             children: <Widget>[
               RtmpView(
-                manager: _manager,
+                manager: rtmpManager,
               ),
               Container(
                 padding: EdgeInsets.only(top: 20),
@@ -80,31 +101,29 @@ class _MyAppState extends State<MyApp> {
                     IconButton(
                       icon: Icon(Icons.play_arrow),
                       onPressed: () {
-                        _manager.living(
-                            url: rtmpUrl);
+                        rtmpManager.startLiveStream(url: rtmpUrl);
                       },
                     ),
                     IconButton(
                       icon: Icon(Icons.pause),
                       onPressed: () {
-                        _manager.pauseLive();
+                        rtmpManager.stopLiveStream();
                         if (_timer != null) {
                           _timer.cancel();
                           _timer = null;
                         }
-                        ;
                       },
                     ),
                     IconButton(
                       icon: Icon(Icons.stop),
                       onPressed: () {
-                        _manager.stopLive();
+                        rtmpManager.stopLiveStream();
                       },
                     ),
                     IconButton(
                       icon: Icon(Icons.switch_camera),
                       onPressed: () {
-                        _manager.switchCamera();
+                        rtmpManager.switchCamera();
                       },
                     ),
                     Container(

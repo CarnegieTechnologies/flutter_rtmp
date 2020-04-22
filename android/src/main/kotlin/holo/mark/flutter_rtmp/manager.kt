@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package holo.mark.flutter_rtmp
 
 import android.content.Context
@@ -25,8 +27,7 @@ class RtmpFactory : PlatformViewFactory(StandardMessageCodec()) {
     }
 }
 
-class RtmpView(context: Context?) : PlatformView {
-    private var context: Context? = context
+class RtmpView(private var context: Context?) : PlatformView {
     private var manager: RtmpManager? = null
 
     override fun dispose() {
@@ -50,7 +51,6 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
 
     private var cameraView: SrsCameraView?
     private lateinit var publisher: SrsPublisher
-    private var config: RtmpConfig
     private var context: Context? = null
     private var logger: RtmpLoger = RtmpLoger()
     private var hasConfig: Boolean = false
@@ -59,7 +59,6 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
         this.context = context
         cameraView = SrsCameraView(context)
         cameraView?.cameraId = 1
-        config = RtmpConfig()
         initPublisher()
         MethodChannel(FlutterRtmpPlugin.registrar.messenger(), DEF_CAMERA_SETTING_CONFIG)
                 .setMethodCallHandler(this)
@@ -76,6 +75,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
         publisher.startCamera()
 
         cameraView?.setCameraCallbacksHandler(object : CameraCallbacksHandler() {
+            @Suppress("DEPRECATION")
             override fun onCameraParameters(params: Camera.Parameters) {
                 //params.setFocusMode("custom-focus");                
                 //params.setWhiteBalance("custom-balance");
@@ -108,7 +108,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
             publisher.startCamera()
 
         } catch (e: Exception) {
-            Log.e(TAG,"[ RTMP ] stop error : $e")
+            Log.e(TAG, "[ RTMP ] stop error : $e")
             return false
         }
         return true
@@ -116,9 +116,9 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
 
     private fun previewAction(): Boolean {
         return try {
+            cameraView?.invalidate()
             publisher.startCamera()
             true
-
         } catch (e: Exception) {
             false
         }
@@ -150,16 +150,6 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
             return false
         }
         return true
-    }
-
-    private fun initConfig(param: Map<String, Any>, result: MethodChannel.Result) {
-        try {
-            @Suppress("UNCHECKED_CAST")
-            config.init(param as Map<String, Map<String, Any>>)
-            result.success(Response().succeessful())
-        } catch (e: Exception) {
-            result.success(Response().failure(e.toString()))
-        }
     }
 
     private fun startLive(param: Map<String, String>, result: MethodChannel.Result) {
@@ -210,7 +200,10 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
                 startLive(param as Map<String, String>, result)
             }
             "initConfig" -> {
-                initConfig(param, result)
+                result.success(Response().failure("not implemented on android"))
+            }
+            "startCamera" -> {
+                startCamera(result)
             }
             "stopLive" -> {
                 stopLive(result)
@@ -232,16 +225,24 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
         }
     }
 
+    private fun startCamera(result: MethodChannel.Result) {
+        if (previewAction()) {
+            result.success(Response().succeessful())
+        } else {
+            result.success(Response().failure("Couldn't start camera"))
+        }
+    }
+
     override fun onEncodeIllegalArgumentException(e: IllegalArgumentException?) {
         handleException(e)
     }
 
     override fun onNetworkWeak() {
-        showToast("Network problems")
+        logMessage("Network problems")
     }
 
     override fun onNetworkResume() {
-        showToast("Network problems resolved")
+        logMessage("Network problems resolved")
     }
 
     private fun handleException(exception: Exception?) {
@@ -257,7 +258,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRtmpConnected(message: String?) {
-        showToast(message)
+        logMessage(message)
     }
 
     override fun onRtmpIllegalStateException(e: IllegalStateException?) {
@@ -265,7 +266,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRtmpStopped() {
-        showToast("Stopped")
+        logMessage("Stopped")
     }
 
     override fun onRtmpIOException(e: IOException?) {
@@ -280,7 +281,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRtmpDisconnected() {
-        showToast("Disconnected")
+        logMessage("Disconnected")
     }
 
     override fun onRtmpVideoFpsChanged(fps: Double) {
@@ -288,7 +289,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRtmpConnecting(message: String?) {
-        message?.let { showToast(it) }
+        message?.let { logMessage(it) }
     }
 
     override fun onRtmpVideoStreaming() {
@@ -316,8 +317,8 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
         handleException(e)
     }
 
-    private fun showToast(message: String?) {
-        Toast.makeText(context?.applicationContext, message ?: "Error", Toast.LENGTH_SHORT).show()
+    private fun logMessage(message: String?) {
+        Log.d(TAG, message ?: "Error")
     }
 
     companion object {
@@ -333,18 +334,18 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRecordFinished(p0: String?) {
-        showToast("MP4 file saved")
+        logMessage("MP4 file saved")
     }
 
     override fun onRecordPause() {
-        showToast("Recording paused")
+        logMessage("Recording paused")
     }
 
     override fun onRecordResume() {
-        showToast("Recording resumed")
+        logMessage("Recording resumed")
     }
 
     override fun onRecordStarted(message: String?) {
-        showToast("Recording started $message")
+        logMessage("Recording started $message")
     }
 }
