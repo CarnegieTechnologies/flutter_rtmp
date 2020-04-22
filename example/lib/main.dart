@@ -44,6 +44,7 @@ class _MyAppState extends State<MyApp> {
   RtmpManager _manager;
   int count = 0;
   Timer _timer;
+  String rtmpUrl = "rtmp://54.76.63.113:1935/livestream/16b7a176-83c8-11ea-8767-4f4b8e85dd39";
 
   @override
   void initState() {
@@ -80,8 +81,7 @@ class _MyAppState extends State<MyApp> {
                       icon: Icon(Icons.play_arrow),
                       onPressed: () {
                         _manager.living(
-                            url:
-                                'rtmp://108.128.39.225:1935/livestream/8f59cbfe-7b0d-11ea-af1f-6f7a7fc77ca0');
+                            url: rtmpUrl);
                       },
                     ),
                     IconButton(
