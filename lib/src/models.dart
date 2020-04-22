@@ -23,7 +23,7 @@ class RtmpVideoConfig {
   bool autoRotate = false;
 
   // 视频输出质量 0~8
-  int quality = 5;
+  int quality = 0;
 
   //竖屏
   int orientation = ORIENTATION_PORTRAIT;
