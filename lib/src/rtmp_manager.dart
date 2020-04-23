@@ -87,7 +87,7 @@ class RtmpManager {
   }
 
   /// 开始直播
-  Future<RtmpResponse> living({@required String url}) async {
+  Future<RtmpResponse> startLiveStream({@required String url}) async {
     if (_statue == RtmpStatue.living) return RtmpResponse.succeed();
     RtmpResponse res = RtmpResponse.fromData(
         await _configChannel.invokeMethod("startLive", {"url": url}));
@@ -98,35 +98,13 @@ class RtmpManager {
   }
 
   /// 停止直播
-  Future<RtmpResponse> stopLive() async {
+  Future<RtmpResponse> stopLiveStream() async {
     if (_statue == RtmpStatue.pause || _statue == RtmpStatue.stop)
       return RtmpResponse.succeed();
     RtmpResponse res = RtmpResponse.fromData(
         await _configChannel.invokeMethod("stopLive", {}));
     if (res.isOk) {
       _statue = RtmpStatue.stop;
-    }
-    return res;
-  }
-
-  /// 暂停直播
-  Future<RtmpResponse> pauseLive() async {
-    if (_statue != RtmpStatue.living) return RtmpResponse.succeed();
-    RtmpResponse res = RtmpResponse.fromData(
-        await _configChannel.invokeMethod("pauseLive", {}));
-    if (res.isOk) {
-      _statue = RtmpStatue.pause;
-    }
-    return res;
-  }
-
-  /// 恢复直播
-  Future<RtmpResponse> resumeLive() async {
-    if (_statue == RtmpStatue.living) return RtmpResponse.succeed();
-    RtmpResponse res = RtmpResponse.fromData(
-        await _configChannel.invokeMethod("resumeLive", {}));
-    if (res.isOk) {
-      _statue = RtmpStatue.living;
     }
     return res;
   }
@@ -144,6 +122,12 @@ class RtmpManager {
     return RtmpResponse.fromData(
         await _configChannel.invokeMethod("switchCamera", {}));
   }
+
+  Future<RtmpResponse> startCamera() async {
+    return RtmpResponse.fromData(
+        await _configChannel.invokeMethod("startCamera", {}));
+  }
+
 
   /// 获取摄像头分辨率
   @deprecated
@@ -197,4 +181,5 @@ class RtmpManager {
           child: _platformView,
         ));
   }
+
 }
