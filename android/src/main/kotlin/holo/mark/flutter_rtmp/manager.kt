@@ -70,7 +70,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
         publisher.setEncodeHandler(SrsEncodeHandler(this))
         publisher.setRtmpHandler(RtmpHandler(this))
         publisher.setRecordHandler(SrsRecordHandler(this))
-        publisher.setPreviewResolution(640, 360)
+        publisher.setPreviewResolution(1280, 720)
         publisher.setOutputResolution(360, 640)
         publisher.setVideoHDMode()
         publisher.startCamera()
@@ -108,7 +108,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
             publisher.startCamera()
 
         } catch (e: Exception) {
-            Log.e(TAG,"[ RTMP ] stop error : $e")
+            Log.e(TAG, "[ RTMP ] stop error : $e")
             return false
         }
         return true
