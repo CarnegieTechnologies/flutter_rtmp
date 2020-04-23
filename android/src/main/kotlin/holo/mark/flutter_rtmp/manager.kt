@@ -212,6 +212,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
             }
             "dispose" -> {
                 dispose()
+                result.success(Response().succeessful())
             }
             "cameraRatio" -> {
                 getCameraRatio(result)
