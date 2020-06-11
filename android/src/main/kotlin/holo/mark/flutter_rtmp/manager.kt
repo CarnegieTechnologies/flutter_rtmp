@@ -49,6 +49,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
         SrsEncodeHandler.SrsEncodeListener, RtmpHandler.RtmpListener,
         SrsRecordHandler.SrsRecordListener {
 
+    private lateinit var channelResult: MethodChannel.Result
     private var cameraView: SrsCameraView?
     private lateinit var publisher: SrsPublisher
     private var context: Context? = null
@@ -115,12 +116,12 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     private fun previewAction(): Boolean {
-        return try {
+        try {
             cameraView?.invalidate()
             publisher.startCamera()
-            true
+            return true
         } catch (e: Exception) {
-            false
+            throw  e
         }
     }
 
@@ -131,7 +132,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
             }
             publisher.startPublish(logger.rtmpUrl)
         } catch (e: Exception) {
-            return false
+            throw  e
         }
         return true
     }
@@ -152,85 +153,88 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
         return true
     }
 
-    private fun startLive(param: Map<String, String>, result: MethodChannel.Result) {
+    private fun startLive(param: Map<String, String>) {
         val url: String? = param["url"]
         if (url == null) {
-            result.success(Response().failure("address is unavailable"))
+            channelResult.success(Response().failure("address is unavailable"))
         }
         logger.rtmpUrl = url ?: ""
         try {
             if (publishAction()) {
-                result.success(Response().succeessful())
+                channelResult.success(Response().succeessful())
             } else {
-                result.success(Response().failure("Live streaming start error"))
+                channelResult.success(Response().failure("Live streaming start error"))
             }
 
         } catch (e: Exception) {
-            result.success(Response().failure(e.toString()))
+            channelResult.success(Response().failure(e.toString()))
         }
     }
 
-    private fun stopLive(result: MethodChannel.Result) {
+    private fun stopLive() {
         if (stopAction()) {
-            result.success(Response().succeessful())
+            channelResult.success(Response().succeessful())
         } else {
-            result.success(Response().failure(""))
+            channelResult.success(Response().failure(""))
         }
     }
 
-    private fun getCameraRatio(result: MethodChannel.Result) {
+    private fun getCameraRatio() {
         val res: MutableMap<String, Any> = Response().succeessful()
-        result.success(res)
+        channelResult.success(res)
     }
 
-    private fun switchCamera(result: MethodChannel.Result) {
+    private fun switchCamera() {
         if (switchCameraAction()) {
-            result.success(Response().succeessful())
+            channelResult.success(Response().succeessful())
         } else {
-            result.success(Response().failure(""))
+            channelResult.success(Response().failure(""))
         }
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+
+        channelResult = result
+
         @Suppress("UNCHECKED_CAST")
         val param: Map<String, Any> = call.arguments as Map<String, Any>
         when (call.method) {
             "startLive" -> {
                 @Suppress("UNCHECKED_CAST")
-                startLive(param as Map<String, String>, result)
+                startLive(param as Map<String, String>)
             }
             "initConfig" -> {
-                result.success(Response().failure("not implemented on android"))
+                channelResult.success(Response().failure("not implemented on android"))
             }
             "startCamera" -> {
-                startCamera(result)
+                startCamera()
             }
             "stopLive" -> {
-                stopLive(result)
+                stopLive()
             }
             "rotateCamera" -> {
             }
             "dispose" -> {
                 dispose()
-                result.success(Response().succeessful())
+                channelResult.success(Response().succeessful())
             }
             "cameraRatio" -> {
-                getCameraRatio(result)
+                getCameraRatio()
             }
             "switchCamera" -> {
-                switchCamera(result)
+                switchCamera()
             }
             else -> {
-                result.notImplemented()
+                channelResult.notImplemented()
             }
         }
     }
 
-    private fun startCamera(result: MethodChannel.Result) {
+    private fun startCamera() {
         if (previewAction()) {
-            result.success(Response().succeessful())
+            channelResult.success(Response().succeessful())
         } else {
-            result.success(Response().failure("Couldn't start camera"))
+            channelResult.success(Response().failure("Couldn't start camera"))
         }
     }
 
@@ -239,7 +243,8 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onNetworkWeak() {
-        logMessage("Network problems")
+//        channelResult.error("300", "Weak Network", null)
+        logMessage("Network weak")
     }
 
     override fun onNetworkResume() {
@@ -248,13 +253,25 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
 
     private fun handleException(exception: Exception?) {
         try {
-            Toast.makeText(context?.applicationContext, exception?.message, Toast.LENGTH_SHORT).show()
             publisher.stopPublish()
             publisher.stopRecord()
-//            btnPublish.setText("publish")
-//            btnRecord.setText("record")
-//            btnSwitchEncoder.setEnabled(true)
+            handleErrorResponse(exception)
+
         } catch (_: Exception) {
+            handleErrorResponse(exception)
+        }
+    }
+
+    private fun handleErrorResponse(exception: Exception?) {
+
+        if (exception != null) {
+            Log.d("RMTP ERRPR", exception.message)
+            channelResult.success(Response().failure("STREAM ERROR " + exception.message))
+
+//            channelResult.error("300", "Stream ERROR", exception.message)
+        } else {
+            channelResult.success(Response().failure("STREAM ERROR happened"))
+
         }
     }
 

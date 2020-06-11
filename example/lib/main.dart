@@ -46,7 +46,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   int count = 0;
   Timer _timer;
   String rtmpUrl =
-      "rtmp://34.243.51.176:1935/livestream/5ee89f5e-8468-11ea-bb7e-1b7127419aaa";
+      "rtmp://52.215.171.161:1935/livestream/dd308b74-abbe-11ea-a01b-1f36e637c245";
 
   @override
   void initState() {
@@ -92,6 +92,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             children: <Widget>[
               RtmpView(
                 manager: rtmpManager,
+                errorWidgetBuilder: (BuildContext context) {
+                  return Text('Error happened');
+                },
               ),
               Container(
                 padding: EdgeInsets.only(top: 20),
@@ -101,7 +104,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     IconButton(
                       icon: Icon(Icons.play_arrow),
                       onPressed: () {
-                        rtmpManager.startLiveStream(url: rtmpUrl);
+                        rtmpManager.startLiveStream(url: rtmpUrl).then((RtmpResponse value) {
+                          print("STREAM ${value.message}");
+                        }).catchError((dynamic error){
+                          print('ERROR DURING STREAM $error');
+                        });
                       },
                     ),
                     IconButton(
