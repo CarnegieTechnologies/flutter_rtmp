@@ -6,8 +6,9 @@ import android.content.Context
 import android.hardware.Camera
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import com.github.faucamp.simplertmp.RtmpHandler
+import holo.mark.flutter_rtmp.FlutterRtmpPlugin.Companion.registrar
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.StandardMessageCodec
@@ -47,7 +48,7 @@ class RtmpView(private var context: Context?) : PlatformView {
 
 class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
         SrsEncodeHandler.SrsEncodeListener, RtmpHandler.RtmpListener,
-        SrsRecordHandler.SrsRecordListener {
+        SrsRecordHandler.SrsRecordListener, EventChannel.StreamHandler {
 
     private lateinit var channelResult: MethodChannel.Result
     private var cameraView: SrsCameraView?
@@ -55,14 +56,17 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     private var context: Context? = null
     private var logger: RtmpLoger = RtmpLoger()
     private var hasConfig: Boolean = false
+    private var eventsStream: EventChannel.EventSink? = null
+    private val listeners: Map<Object, Runnable> = HashMap()
 
     init {
         this.context = context
         cameraView = SrsCameraView(context)
         cameraView?.cameraId = 1
         initPublisher()
-        MethodChannel(FlutterRtmpPlugin.registrar.messenger(), DEF_CAMERA_SETTING_CONFIG)
+        MethodChannel(registrar.messenger(), DEF_CAMERA_SETTING_CONFIG)
                 .setMethodCallHandler(this)
+        EventChannel(registrar.messenger(), DEF_ERROR_EVENTS).setStreamHandler(this)
     }
 
     private fun initPublisher() {
@@ -116,12 +120,12 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     private fun previewAction(): Boolean {
-        try {
+        return try {
             cameraView?.invalidate()
             publisher.startCamera()
-            return true
+            true
         } catch (e: Exception) {
-            throw  e
+            false
         }
     }
 
@@ -132,7 +136,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
             }
             publisher.startPublish(logger.rtmpUrl)
         } catch (e: Exception) {
-            throw  e
+            return false
         }
         return true
     }
@@ -193,9 +197,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
-
         channelResult = result
-
         @Suppress("UNCHECKED_CAST")
         val param: Map<String, Any> = call.arguments as Map<String, Any>
         when (call.method) {
@@ -243,8 +245,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onNetworkWeak() {
-//        channelResult.error("300", "Weak Network", null)
-        logMessage("Network weak")
+        logMessage("Network problems")
     }
 
     override fun onNetworkResume() {
@@ -253,25 +254,11 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
 
     private fun handleException(exception: Exception?) {
         try {
+            eventsStream?.success(exception?.message)
             publisher.stopPublish()
             publisher.stopRecord()
-            handleErrorResponse(exception)
-
         } catch (_: Exception) {
-            handleErrorResponse(exception)
-        }
-    }
-
-    private fun handleErrorResponse(exception: Exception?) {
-
-        if (exception != null) {
-            Log.d("RMTP ERRPR", exception.message)
-            channelResult.success(Response().failure("STREAM ERROR " + exception.message))
-
-//            channelResult.error("300", "Stream ERROR", exception.message)
-        } else {
-            channelResult.success(Response().failure("STREAM ERROR happened"))
-
+            eventsStream?.success(exception?.message)
         }
     }
 
@@ -336,7 +323,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     private fun logMessage(message: String?) {
-        Log.d(TAG, message ?: "Error")
+        eventsStream?.success(message)
     }
 
     companion object {
@@ -366,4 +353,14 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     override fun onRecordStarted(message: String?) {
         logMessage("Recording started $message")
     }
+
+    override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+        eventsStream = events
+    }
+
+    override fun onCancel(arguments: Any?) {
+        TODO("Not yet implemented")
+    }
+
 }
+

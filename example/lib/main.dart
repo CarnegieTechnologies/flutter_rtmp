@@ -104,9 +104,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     IconButton(
                       icon: Icon(Icons.play_arrow),
                       onPressed: () {
-                        rtmpManager.startLiveStream(url: rtmpUrl).then((RtmpResponse value) {
+                        rtmpManager
+                            .startLiveStream(
+                                url: rtmpUrl,
+                                listener: (msg) {
+                                  log(msg);
+                                })
+                            .then((RtmpResponse value) {
                           print("STREAM ${value.message}");
-                        }).catchError((dynamic error){
+                        }).catchError((dynamic error) {
                           print('ERROR DURING STREAM $error');
                         });
                       },
@@ -147,5 +153,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  void log(String logString) {
+    print('LOG $logString');
   }
 }

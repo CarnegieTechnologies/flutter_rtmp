@@ -9,6 +9,7 @@ var DEF_CAMERA_RTMP_VIEW = "holo#cameraRtmpView"
 
 /// 配置方法
 var DEF_CAMERA_SETTING_CONFIG = "holo#cameraSettingConfig"
+var DEF_ERROR_EVENTS = "error_events"
 
 
 var PKG_NAME = "hv.rtmp"
