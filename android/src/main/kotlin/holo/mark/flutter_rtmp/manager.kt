@@ -257,8 +257,8 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
             eventsStream?.success(exception?.message)
             publisher.stopPublish()
             publisher.stopRecord()
-        } catch (_: Exception) {
-            eventsStream?.success(exception?.message)
+        } catch (error: Exception) {
+            eventsStream?.error("900", "FATAL ERROR HAPPENED", error)
         }
     }
 
@@ -290,7 +290,6 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRtmpVideoFpsChanged(fps: Double) {
-        Log.i(TAG, String.format("Output Fps: %f", fps))
     }
 
     override fun onRtmpConnecting(message: String?) {
@@ -301,21 +300,11 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRtmpAudioBitrateChanged(bitrate: Double) {
-        val rate = bitrate.toInt()
-        if (rate / 1000 > 0) {
-            Log.i(TAG, String.format("Audio bitrate: %f kbps", bitrate / 1000))
-        } else {
-            Log.i(TAG, String.format("Audio bitrate: %d bps", rate))
-        }
+
     }
 
     override fun onRtmpVideoBitrateChanged(bitrate: Double) {
-        val rate = bitrate.toInt()
-        if (rate / 1000 > 0) {
-            Log.i(TAG, String.format("Video bitrate: %f kbps", bitrate / 1000))
-        } else {
-            Log.i(TAG, String.format("Video bitrate: %d bps", rate))
-        }
+
     }
 
     override fun onRtmpIllegalArgumentException(e: IllegalArgumentException?) {
