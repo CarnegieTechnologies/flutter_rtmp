@@ -245,25 +245,25 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onNetworkWeak() {
-        logMessage("Network problems")
+        logMessage(WEAK_NETWORK_ERROR_CODE, "Poor Network Connection")
     }
 
     override fun onNetworkResume() {
-        logMessage("Network problems resolved")
+        logMessage(STREAM_GENERIC_ERROR_CDDE, "Network established")
     }
 
     private fun handleException(exception: Exception?) {
         try {
-            eventsStream?.success(exception?.message)
-            publisher.stopPublish()
             publisher.stopRecord()
+            publisher.stopPublish()
+            eventsStream?.success(ErrorResponse().builder(STREAM_ERROR_HAPPENED_CODE, exception?.message))
         } catch (error: Exception) {
-            eventsStream?.error("900", "FATAL ERROR HAPPENED", error)
+//            eventsStream?.success(ErrorResponse().builder(STREAM_ERROR_HAPPENED_CODE, error.message))
         }
     }
 
     override fun onRtmpConnected(message: String?) {
-        logMessage(message)
+        logMessage(RTMP_CONNECTED_CODE, message)
     }
 
     override fun onRtmpIllegalStateException(e: IllegalStateException?) {
@@ -271,7 +271,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRtmpStopped() {
-        logMessage("Stopped")
+        logMessage(STREAM_STOPPED_CODE, "STREAM STOPPED")
     }
 
     override fun onRtmpIOException(e: IOException?) {
@@ -286,14 +286,14 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRtmpDisconnected() {
-        logMessage("Disconnected")
+        logMessage(RTMP_DISCONNECTED_CODE, "Disconnected")
     }
 
     override fun onRtmpVideoFpsChanged(fps: Double) {
     }
 
     override fun onRtmpConnecting(message: String?) {
-        message?.let { logMessage(it) }
+        message?.let { logMessage(RTMP_CONNECTING_CODE, it) }
     }
 
     override fun onRtmpVideoStreaming() {
@@ -311,8 +311,8 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
         handleException(e)
     }
 
-    private fun logMessage(message: String?) {
-        eventsStream?.success(message)
+    private fun logMessage(code: String, message: String?) {
+        eventsStream?.success(ErrorResponse().builder(code, message))
     }
 
     companion object {
@@ -328,19 +328,19 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRecordFinished(p0: String?) {
-        logMessage("MP4 file saved")
+        logMessage(RTMP_FINISHED_CODE, "Recording finished")
     }
 
     override fun onRecordPause() {
-        logMessage("Recording paused")
+        logMessage(RTMP_PAUSED_CODE, "Recording paused")
     }
 
     override fun onRecordResume() {
-        logMessage("Recording resumed")
+        logMessage(RTMP_RESUMED_CODE, "Recording resumed")
     }
 
     override fun onRecordStarted(message: String?) {
-        logMessage("Recording started $message")
+        logMessage(RTMP_STARTED_CODE, "Recording started")
     }
 
     override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
@@ -348,7 +348,6 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onCancel(arguments: Any?) {
-        TODO("Not yet implemented")
     }
 
 }

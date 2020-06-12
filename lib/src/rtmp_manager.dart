@@ -12,8 +12,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_rtmp/src/def.dart';
-import 'package:flutter_rtmp/src/models.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+import 'models/models.dart';
 
 typedef void RTMPListener(dynamic msg);
 

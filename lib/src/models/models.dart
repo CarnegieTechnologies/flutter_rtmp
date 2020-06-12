@@ -36,16 +36,16 @@ class RtmpVideoConfig {
     };
   }
 
-  void rotate(){
-    if(orientation == ORIENTATION_PORTRAIT){
+  void rotate() {
+    if (orientation == ORIENTATION_PORTRAIT) {
       orientation = ORIENTATION_LANDSCAPE;
-    }else{
+    } else {
       orientation = ORIENTATION_PORTRAIT;
     }
   }
+
   /// 是否为横屏
   bool get isLandspace => orientation == ORIENTATION_LANDSCAPE;
-  
 }
 
 class RtmpAudioConfig {}
@@ -57,14 +57,16 @@ class RtmpResponse {
 
   Map oridata;
 
-  RtmpResponse.succeed({String msg}){
+  RtmpResponse.succeed({String msg}) {
     succeed = true;
     message = msg ?? "";
   }
-  RtmpResponse.faile({String msg}){
+
+  RtmpResponse.faile({String msg}) {
     succeed = false;
     message = msg ?? "";
   }
+
   RtmpResponse.fromData(Map data) {
     oridata = data;
     succeed = data['succeed'] ?? false;
@@ -73,3 +75,7 @@ class RtmpResponse {
 
   bool get isOk => succeed == true;
 }
+
+
+
+

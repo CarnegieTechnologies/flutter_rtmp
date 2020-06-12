@@ -5,7 +5,8 @@
 * ide : VSCode
 */
 
-export 'src/models.dart'
+export 'src/models/models.dart'
     show RtmpConfig, RtmpVideoConfig, RtmpAudioConfig, RtmpResponse;
+export 'src/models/error_response.dart' show ErrorStreamResponse;
 export 'src/rtmp_manager.dart' show RtmpManager;
 export 'src/rtmp_view.dart' show RtmpView;

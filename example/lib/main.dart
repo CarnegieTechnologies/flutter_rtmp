@@ -46,7 +46,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   int count = 0;
   Timer _timer;
   String rtmpUrl =
-      "rtmp://52.215.171.161:1935/livestream/dd308b74-abbe-11ea-a01b-1f36e637c245";
+      "rtmp://54.77.16.223:1935/livestream/5728c460-aed4-11ea-a626-c30a3c734a38";
 
   @override
   void initState() {
@@ -108,11 +108,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                             .startLiveStream(
                                 url: rtmpUrl,
                                 listener: (msg) {
-                                  log(msg);
+                                  ErrorStreamResponse response =
+                                      ErrorStreamResponse.fromData(msg);
+                                  print("DJURO");
+                                  print(response.code);
+                                  print(response.message);
                                 })
                             .then((RtmpResponse value) {
-                          print("STREAM ${value.message}");
                         }).catchError((dynamic error) {
+//                          rtmpManager.stopLiveStream();
                           print('ERROR DURING STREAM $error');
                         });
                       },

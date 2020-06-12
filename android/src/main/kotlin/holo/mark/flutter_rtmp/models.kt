@@ -3,6 +3,26 @@ package holo.mark.flutter_rtmp
 import android.content.res.Configuration
 
 
+class ErrorResponse {
+
+
+    private var code: String = ""
+    private var message: String = ""
+
+    fun builder(code: String?, msg: String?): MutableMap<String, Any> {
+        this.code = code ?: ""
+        message = msg ?: ""
+        return toJson()
+    }
+
+    private fun toJson(): MutableMap<String, Any> {
+        return mutableMapOf(
+                Pair("Code", code),
+                Pair("Message", message)
+        )
+    }
+
+}
 
 /// 回调
 class Response {
@@ -13,18 +33,18 @@ class Response {
     /// 信息
     private var message: String = ""
 
-    fun succeessful(): MutableMap<String,Any> {
+    fun succeessful(): MutableMap<String, Any> {
         succeed = true
         return toJson()
     }
 
-    fun failure(msg: String?): MutableMap<String,Any> {
+    fun failure(msg: String?): MutableMap<String, Any> {
         succeed = false
         message = msg ?: ""
         return toJson()
     }
 
-    private fun toJson(): MutableMap<String,Any> {
+    private fun toJson(): MutableMap<String, Any> {
         return mutableMapOf(
                 Pair("succeed", succeed),
                 Pair("message", message)
