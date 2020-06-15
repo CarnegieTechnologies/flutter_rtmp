@@ -108,8 +108,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                             .startLiveStream(
                                 url: rtmpUrl,
                                 listener: (msg) {
-                                  ErrorStreamResponse response =
-                                      ErrorStreamResponse.fromData(msg);
+                                  StreamResponseEvent response =
+                                      StreamResponseEvent.fromData(msg);
                                   print("DJURO");
                                   print(response.code);
                                   print(response.message);

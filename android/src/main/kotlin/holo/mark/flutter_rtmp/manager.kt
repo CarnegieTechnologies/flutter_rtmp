@@ -255,9 +255,9 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     private fun handleException(exception: Exception?) {
         try {
             stopAction()
-            eventsStream?.success(ErrorResponse().builder(STREAM_ERROR_HAPPENED_CODE, exception?.message))
+            eventsStream?.success(StreamEventResponse().builder(STREAM_ERROR_HAPPENED_CODE, exception?.message))
         } catch (error: Exception) {
-            eventsStream?.success(ErrorResponse().builder(STREAM_ERROR_HAPPENED_CODE, error.message))
+            eventsStream?.success(StreamEventResponse().builder(STREAM_ERROR_HAPPENED_CODE, error.message))
         }
     }
 
@@ -312,7 +312,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     private fun logMessage(code: String, message: String?) {
-        eventsStream?.success(ErrorResponse().builder(code, message))
+        eventsStream?.success(StreamEventResponse().builder(code, message))
     }
 
     companion object {

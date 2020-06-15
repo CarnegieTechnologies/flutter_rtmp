@@ -3,7 +3,7 @@ package holo.mark.flutter_rtmp
 import android.content.res.Configuration
 
 
-class ErrorResponse {
+class StreamEventResponse {
 
 
     private var code: String = ""
