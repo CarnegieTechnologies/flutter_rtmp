@@ -254,8 +254,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
 
     private fun handleException(exception: Exception?) {
         try {
-            publisher.stopRecord()
-            publisher.stopPublish()
+            stopAction()
             eventsStream?.success(ErrorResponse().builder(STREAM_ERROR_HAPPENED_CODE, exception?.message))
         } catch (error: Exception) {
             eventsStream?.success(ErrorResponse().builder(STREAM_ERROR_HAPPENED_CODE, error.message))
