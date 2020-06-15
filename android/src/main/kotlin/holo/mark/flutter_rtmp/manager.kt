@@ -120,13 +120,13 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     private fun previewAction(): Boolean {
-        return try {
+        try {
             cameraView?.invalidate()
             publisher.startCamera()
-            true
         } catch (e: Exception) {
-            false
+            return false
         }
+        return true
     }
 
     private fun publishAction(): Boolean {
@@ -292,10 +292,11 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRtmpConnecting(message: String?) {
-        message?.let { logMessage(RTMP_CONNECTING_CODE, it) }
+        logMessage(RTMP_CONNECTING_CODE, message)
     }
 
     override fun onRtmpVideoStreaming() {
+        logMessage(RTMP_STREAMING_CODE, "Streaming in progress")
     }
 
     override fun onRtmpAudioBitrateChanged(bitrate: Double) {
