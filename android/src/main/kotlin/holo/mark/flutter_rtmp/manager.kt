@@ -258,7 +258,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
             publisher.stopPublish()
             eventsStream?.success(ErrorResponse().builder(STREAM_ERROR_HAPPENED_CODE, exception?.message))
         } catch (error: Exception) {
-//            eventsStream?.success(ErrorResponse().builder(STREAM_ERROR_HAPPENED_CODE, error.message))
+            eventsStream?.success(ErrorResponse().builder(STREAM_ERROR_HAPPENED_CODE, error.message))
         }
     }
 
