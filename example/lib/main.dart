@@ -46,7 +46,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   int count = 0;
   Timer _timer;
   String rtmpUrl =
-      "rtmp://34.243.51.176:1935/livestream/5ee89f5e-8468-11ea-bb7e-1b7127419aaa";
+      "rtmp://54.77.16.223:1935/livestream/5728c460-aed4-11ea-a626-c30a3c734a38";
 
   @override
   void initState() {
@@ -92,6 +92,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             children: <Widget>[
               RtmpView(
                 manager: rtmpManager,
+                errorWidgetBuilder: (BuildContext context) {
+                  return Text('Error happened');
+                },
               ),
               Container(
                 padding: EdgeInsets.only(top: 20),
@@ -101,7 +104,21 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     IconButton(
                       icon: Icon(Icons.play_arrow),
                       onPressed: () {
-                        rtmpManager.startLiveStream(url: rtmpUrl);
+                        rtmpManager
+                            .startLiveStream(
+                                url: rtmpUrl,
+                                listener: (msg) {
+                                  StreamResponseEvent response =
+                                      StreamResponseEvent.fromData(msg);
+                                  print("DJURO");
+                                  print(response.code);
+                                  print(response.message);
+                                })
+                            .then((RtmpResponse value) {
+                        }).catchError((dynamic error) {
+//                          rtmpManager.stopLiveStream();
+                          print('ERROR DURING STREAM $error');
+                        });
                       },
                     ),
                     IconButton(
@@ -140,5 +157,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  void log(String logString) {
+    print('LOG $logString');
   }
 }

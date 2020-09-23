@@ -5,13 +5,18 @@
 * ide : VSCode
 */
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_rtmp/src/def.dart';
-import 'package:flutter_rtmp/src/models.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+import 'models/models.dart';
+
+typedef void RTMPListener(dynamic msg);
 
 /// 直播控制器
 class RtmpManager {
@@ -22,9 +27,11 @@ class RtmpManager {
 
   /// 配置
   MethodChannel _configChannel = MethodChannel(DEF_CAMERA_SETTING_CONFIG);
+  EventChannel _channel = EventChannel('error_events');
 
   /// premission state
   bool _permissionEnable;
+
   bool get permissionEnable => _permissionEnable ?? false;
 
   /// permission check
@@ -87,13 +94,15 @@ class RtmpManager {
   }
 
   /// 开始直播
-  Future<RtmpResponse> startLiveStream({@required String url}) async {
+  Future<RtmpResponse> startLiveStream(
+      {@required String url, @required RTMPListener listener}) async {
     if (_statue == RtmpStatue.living) return RtmpResponse.succeed();
     RtmpResponse res = RtmpResponse.fromData(
         await _configChannel.invokeMethod("startLive", {"url": url}));
     if (res.isOk) {
       _statue = RtmpStatue.living;
     }
+    _channel.receiveBroadcastStream().listen(listener, cancelOnError: true);
     return res;
   }
 
@@ -128,7 +137,6 @@ class RtmpManager {
         await _configChannel.invokeMethod("startCamera", {}));
   }
 
-
   /// 获取摄像头分辨率
   @deprecated
   Future<double> cameraRatio() async {
@@ -150,6 +158,7 @@ class RtmpManager {
 
   GlobalKey _globalKey = GlobalKey();
   Widget _platformView;
+
   Widget view() {
     if (_platformView == null) {
       print("[RTMP] get platformview");
@@ -181,5 +190,4 @@ class RtmpManager {
           child: _platformView,
         ));
   }
-
 }

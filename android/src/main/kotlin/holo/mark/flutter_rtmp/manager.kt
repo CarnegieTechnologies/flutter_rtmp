@@ -6,8 +6,9 @@ import android.content.Context
 import android.hardware.Camera
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import com.github.faucamp.simplertmp.RtmpHandler
+import holo.mark.flutter_rtmp.FlutterRtmpPlugin.Companion.registrar
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.StandardMessageCodec
@@ -47,21 +48,25 @@ class RtmpView(private var context: Context?) : PlatformView {
 
 class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
         SrsEncodeHandler.SrsEncodeListener, RtmpHandler.RtmpListener,
-        SrsRecordHandler.SrsRecordListener {
+        SrsRecordHandler.SrsRecordListener, EventChannel.StreamHandler {
 
+    private lateinit var channelResult: MethodChannel.Result
     private var cameraView: SrsCameraView?
     private lateinit var publisher: SrsPublisher
     private var context: Context? = null
     private var logger: RtmpLoger = RtmpLoger()
     private var hasConfig: Boolean = false
+    private var eventsStream: EventChannel.EventSink? = null
+    private val listeners: Map<Object, Runnable> = HashMap()
 
     init {
         this.context = context
         cameraView = SrsCameraView(context)
         cameraView?.cameraId = 1
         initPublisher()
-        MethodChannel(FlutterRtmpPlugin.registrar.messenger(), DEF_CAMERA_SETTING_CONFIG)
+        MethodChannel(registrar.messenger(), DEF_CAMERA_SETTING_CONFIG)
                 .setMethodCallHandler(this)
+        EventChannel(registrar.messenger(), DEF_ERROR_EVENTS).setStreamHandler(this)
     }
 
     private fun initPublisher() {
@@ -115,13 +120,13 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     private fun previewAction(): Boolean {
-        return try {
+        try {
             cameraView?.invalidate()
             publisher.startCamera()
-            true
         } catch (e: Exception) {
-            false
+            return false
         }
+        return true
     }
 
     private fun publishAction(): Boolean {
@@ -152,85 +157,86 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
         return true
     }
 
-    private fun startLive(param: Map<String, String>, result: MethodChannel.Result) {
+    private fun startLive(param: Map<String, String>) {
         val url: String? = param["url"]
         if (url == null) {
-            result.success(Response().failure("address is unavailable"))
+            channelResult.success(Response().failure("address is unavailable"))
         }
         logger.rtmpUrl = url ?: ""
         try {
             if (publishAction()) {
-                result.success(Response().succeessful())
+                channelResult.success(Response().succeessful())
             } else {
-                result.success(Response().failure("Live streaming start error"))
+                channelResult.success(Response().failure("Live streaming start error"))
             }
 
         } catch (e: Exception) {
-            result.success(Response().failure(e.toString()))
+            channelResult.success(Response().failure(e.toString()))
         }
     }
 
-    private fun stopLive(result: MethodChannel.Result) {
+    private fun stopLive() {
         if (stopAction()) {
-            result.success(Response().succeessful())
+            channelResult.success(Response().succeessful())
         } else {
-            result.success(Response().failure(""))
+            channelResult.success(Response().failure(""))
         }
     }
 
-    private fun getCameraRatio(result: MethodChannel.Result) {
+    private fun getCameraRatio() {
         val res: MutableMap<String, Any> = Response().succeessful()
-        result.success(res)
+        channelResult.success(res)
     }
 
-    private fun switchCamera(result: MethodChannel.Result) {
+    private fun switchCamera() {
         if (switchCameraAction()) {
-            result.success(Response().succeessful())
+            channelResult.success(Response().succeessful())
         } else {
-            result.success(Response().failure(""))
+            channelResult.success(Response().failure(""))
         }
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        channelResult = result
         @Suppress("UNCHECKED_CAST")
         val param: Map<String, Any> = call.arguments as Map<String, Any>
         when (call.method) {
             "startLive" -> {
                 @Suppress("UNCHECKED_CAST")
-                startLive(param as Map<String, String>, result)
+                startLive(param as Map<String, String>)
             }
             "initConfig" -> {
-                result.success(Response().failure("not implemented on android"))
+                channelResult.success(Response().failure("not implemented on android"))
             }
             "startCamera" -> {
-                startCamera(result)
+                startCamera()
             }
             "stopLive" -> {
-                stopLive(result)
+                stopLive()
             }
             "rotateCamera" -> {
             }
             "dispose" -> {
                 dispose()
-                result.success(Response().succeessful())
+                channelResult.success(Response().succeessful())
             }
             "cameraRatio" -> {
-                getCameraRatio(result)
+                getCameraRatio()
             }
             "switchCamera" -> {
-                switchCamera(result)
+                switchCamera()
             }
             else -> {
-                result.notImplemented()
+                channelResult.notImplemented()
             }
         }
     }
 
-    private fun startCamera(result: MethodChannel.Result) {
+    private fun startCamera() {
         if (previewAction()) {
-            result.success(Response().succeessful())
+            channelResult.success(Response().succeessful())
         } else {
-            result.success(Response().failure("Couldn't start camera"))
+            channelResult.success(Response().failure("Couldn't start camera"))
         }
     }
 
@@ -239,27 +245,24 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onNetworkWeak() {
-        logMessage("Network problems")
+        logMessage(WEAK_NETWORK_ERROR_CODE, "Poor Network Connection")
     }
 
     override fun onNetworkResume() {
-        logMessage("Network problems resolved")
+        logMessage(STREAM_GENERIC_ERROR_CDDE, "Network established")
     }
 
     private fun handleException(exception: Exception?) {
         try {
-            Toast.makeText(context?.applicationContext, exception?.message, Toast.LENGTH_SHORT).show()
-            publisher.stopPublish()
-            publisher.stopRecord()
-//            btnPublish.setText("publish")
-//            btnRecord.setText("record")
-//            btnSwitchEncoder.setEnabled(true)
-        } catch (_: Exception) {
+            stopAction()
+            eventsStream?.success(StreamEventResponse().builder(STREAM_ERROR_HAPPENED_CODE, exception?.message))
+        } catch (error: Exception) {
+            eventsStream?.success(StreamEventResponse().builder(STREAM_ERROR_HAPPENED_CODE, error.message))
         }
     }
 
     override fun onRtmpConnected(message: String?) {
-        logMessage(message)
+        logMessage(RTMP_CONNECTED_CODE, message)
     }
 
     override fun onRtmpIllegalStateException(e: IllegalStateException?) {
@@ -267,7 +270,7 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRtmpStopped() {
-        logMessage("Stopped")
+        logMessage(STREAM_STOPPED_CODE, "STREAM STOPPED")
     }
 
     override fun onRtmpIOException(e: IOException?) {
@@ -282,44 +285,34 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRtmpDisconnected() {
-        logMessage("Disconnected")
+        logMessage(RTMP_DISCONNECTED_CODE, "Disconnected")
     }
 
     override fun onRtmpVideoFpsChanged(fps: Double) {
-        Log.i(TAG, String.format("Output Fps: %f", fps))
     }
 
     override fun onRtmpConnecting(message: String?) {
-        message?.let { logMessage(it) }
+        logMessage(RTMP_CONNECTING_CODE, message)
     }
 
     override fun onRtmpVideoStreaming() {
+        logMessage(RTMP_STREAMING_CODE, "Streaming in progress")
     }
 
     override fun onRtmpAudioBitrateChanged(bitrate: Double) {
-        val rate = bitrate.toInt()
-        if (rate / 1000 > 0) {
-            Log.i(TAG, String.format("Audio bitrate: %f kbps", bitrate / 1000))
-        } else {
-            Log.i(TAG, String.format("Audio bitrate: %d bps", rate))
-        }
+
     }
 
     override fun onRtmpVideoBitrateChanged(bitrate: Double) {
-        val rate = bitrate.toInt()
-        if (rate / 1000 > 0) {
-            Log.i(TAG, String.format("Video bitrate: %f kbps", bitrate / 1000))
-        } else {
-            Log.i(TAG, String.format("Video bitrate: %d bps", rate))
-        }
+
     }
 
     override fun onRtmpIllegalArgumentException(e: IllegalArgumentException?) {
         handleException(e)
     }
 
-    private fun logMessage(message: String?) {
-        Log.d(TAG, message ?: "Error")
+    private fun logMessage(code: String, message: String?) {
+        eventsStream?.success(StreamEventResponse().builder(code, message))
     }
 
     companion object {
@@ -335,18 +328,27 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     }
 
     override fun onRecordFinished(p0: String?) {
-        logMessage("MP4 file saved")
+        logMessage(RTMP_FINISHED_CODE, "Recording finished")
     }
 
     override fun onRecordPause() {
-        logMessage("Recording paused")
+        logMessage(RTMP_PAUSED_CODE, "Recording paused")
     }
 
     override fun onRecordResume() {
-        logMessage("Recording resumed")
+        logMessage(RTMP_RESUMED_CODE, "Recording resumed")
     }
 
     override fun onRecordStarted(message: String?) {
-        logMessage("Recording started $message")
+        logMessage(RTMP_STARTED_CODE, "Recording started")
     }
+
+    override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+        eventsStream = events
+    }
+
+    override fun onCancel(arguments: Any?) {
+    }
+
 }
+
