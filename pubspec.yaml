@@ -1,6 +1,6 @@
 name: flutter_rtmp
 description: A rtmp plugin.Support both iOS and Android. It has been upload to github. 
-version: 0.2.5+4
+version: 0.2.5+5
 #author: mark<mkw666311@163.com>,youshinki<327624872yzh@163.com>
 homepage: https://github.com/MEnigma
 
@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  permission_handler: ^4.2.0+hotfix.3
+  permission_handler: ^5.0.1+1
 
 dev_dependencies:
   flutter_test:
