@@ -20,6 +20,7 @@ rootProject.allprojects {
         google()
         jcenter()
         maven { url 'https://jitpack.io' }
+        maven { url "http://nexus.carnegietechnologies.rs:8085/repository/android-library/" }
     }
 }
 
@@ -48,7 +49,9 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.aar'])
+//    implementation fileTree(dir: 'libs', include: ['*.aar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.carnegietechnologies.flutter:rtmp_ct:1.0.1'
+
 }
