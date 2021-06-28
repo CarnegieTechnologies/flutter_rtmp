@@ -3,7 +3,7 @@ class StreamResponseEvent {
   String message = "";
 
   StreamResponseEvent.fromData(Map data) {
-    code = data['Code'] ?? false;
+    code = data['Code'] ?? false as String;
     message = data['Message'] ?? "";
   }
 }

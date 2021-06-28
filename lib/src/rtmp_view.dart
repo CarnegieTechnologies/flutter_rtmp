@@ -20,14 +20,14 @@ class RtmpView extends StatelessWidget {
   final bool checkPermission;
 
   /// loading view
-  final WidgetBuilder permissionLoadingWidgetBuilder;
+  final WidgetBuilder? permissionLoadingWidgetBuilder;
 
   /// errorwidget for permission
-  final WidgetBuilder errorWidgetBuilder;
+  final WidgetBuilder? errorWidgetBuilder;
 
   RtmpView(
-      {Key key,
-      @required this.manager,
+      {Key? key,
+      required this.manager,
       this.checkPermission = true,
       this.permissionLoadingWidgetBuilder,
       this.errorWidgetBuilder})
@@ -43,7 +43,7 @@ class RtmpView extends StatelessWidget {
                 builder: (_, AsyncSnapshot shot) {
                   if (shot.connectionState != ConnectionState.done) {
                     return permissionLoadingWidgetBuilder != null
-                        ? permissionLoadingWidgetBuilder(_)
+                        ? permissionLoadingWidgetBuilder!(_)
                         : Center(
                             child: CircularProgressIndicator(),
                           );
@@ -51,7 +51,7 @@ class RtmpView extends StatelessWidget {
                     return shot.data != null && shot.data
                         ? manager.view()
                         : errorWidgetBuilder != null
-                            ? errorWidgetBuilder(_)
+                            ? errorWidgetBuilder!(_)
                             : Center(
                                 child: Text("Permission error"),
                               );

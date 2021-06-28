@@ -55,14 +55,14 @@ class RtmpResponse {
   bool succeed = false;
   String message = "";
 
-  Map oridata;
+  late Map oridata;
 
-  RtmpResponse.succeed({String msg}) {
+  RtmpResponse.succeed({String? msg}) {
     succeed = true;
     message = msg ?? "";
   }
 
-  RtmpResponse.faile({String msg}) {
+  RtmpResponse.faile({String? msg}) {
     succeed = false;
     message = msg ?? "";
   }

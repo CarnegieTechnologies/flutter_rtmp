@@ -5,12 +5,12 @@ version: 0.2.5+5
 homepage: https://github.com/MEnigma
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: '>=2.12.0 <3.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  permission_handler: ^8.1.1
+  permission_handler: ^8.1.2
 
 dev_dependencies:
   flutter_test:
