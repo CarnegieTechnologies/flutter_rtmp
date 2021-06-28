@@ -36,33 +36,32 @@ class RtmpManager {
 
   /// permission check
   Future<bool> permissionCheck() async {
-    PermissionHandler pHandler = PermissionHandler();
-    List<PermissionGroup> requestPermission = [];
+    List<Permission> requestPermission = [];
 
     /// 摄像机
-    if (await pHandler.checkPermissionStatus(PermissionGroup.camera) !=
-        PermissionStatus.granted) {
-      requestPermission.add(PermissionGroup.camera);
+    if (await Permission.camera.request().isGranted) {
+      requestPermission.add(Permission.camera);
     }
 
     /// 文件读写
-    if (await pHandler.checkPermissionStatus(PermissionGroup.storage) !=
-        PermissionStatus.granted) {
+    if (await Permission.storage.request().isGranted) {
       if (defaultTargetPlatform == TargetPlatform.android)
-        requestPermission.add(PermissionGroup.storage);
+        requestPermission.add(Permission.storage);
     }
 
     /// 麦克风
-    if (await pHandler.checkPermissionStatus(PermissionGroup.microphone) !=
-        PermissionStatus.granted) {
-      requestPermission.add(PermissionGroup.microphone);
+    if (await Permission.microphone.request().isGranted) {
+      requestPermission.add(Permission.microphone);
     }
 
     if (requestPermission.length > 0) {
-      Map<PermissionGroup, PermissionStatus> res =
-          await pHandler.requestPermissions(requestPermission);
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.location,
+        Permission.storage,
+      ].request();
+
       bool enable = true;
-      res.forEach((var p, PermissionStatus status) {
+      statuses.forEach((var p, PermissionStatus status) {
         if (status != PermissionStatus.granted) {
           enable = false;
           return;
