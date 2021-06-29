@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_rtmp/flutter_rtmp.dart';
-import 'package:screen/screen.dart';
+import 'package:wakelock/wakelock.dart';
 
 void main() => runApp(FirstScreen());
 
@@ -42,9 +42,9 @@ class FirstWidget extends StatelessWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  RtmpManager rtmpManager;
+  late RtmpManager rtmpManager;
   int count = 0;
-  Timer _timer;
+  late Timer _timer;
   String rtmpUrl =
       "rtmp://54.77.16.223:1935/livestream/5728c460-aed4-11ea-a626-c30a3c734a38";
 
@@ -54,8 +54,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       print("--- view did created ---");
     });
     super.initState();
-    Screen.keepOn(true);
-    WidgetsBinding.instance.addObserver(this);
+    Wakelock.enable();
+    WidgetsBinding.instance!.addObserver(this);
   }
 
   @override
@@ -64,21 +64,22 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       rtmpManager.stopLiveStream();
     }
     if (AppLifecycleState.paused == state) {
-      Screen.keepOn(false);
+      Wakelock.disable();
       rtmpManager.stopLiveStream();
     }
     if (AppLifecycleState.resumed == state) {
-      Screen.keepOn(true);
+      Wakelock.enable();
+
       rtmpManager.startCamera();
     }
   }
 
   @override
   Future<void> dispose() async {
-    Screen.keepOn(false);
-    WidgetsBinding.instance.removeObserver(this);
+    Wakelock.disable();
+
+    WidgetsBinding.instance!.removeObserver(this);
     rtmpManager.dispose();
-    rtmpManager = null;
     super.dispose();
   }
 
@@ -114,8 +115,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                                   print(response.code);
                                   print(response.message);
                                 })
-                            .then((RtmpResponse value) {
-                        }).catchError((dynamic error) {
+                            .then((RtmpResponse value) {})
+                            .catchError((dynamic error) {
 //                          rtmpManager.stopLiveStream();
                           print('ERROR DURING STREAM $error');
                         });
@@ -125,10 +126,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                       icon: Icon(Icons.pause),
                       onPressed: () {
                         rtmpManager.stopLiveStream();
-                        if (_timer != null) {
-                          _timer.cancel();
-                          _timer = null;
-                        }
+                        _timer.cancel();
                       },
                     ),
                     IconButton(

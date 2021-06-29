@@ -23,46 +23,46 @@ class RtmpManager {
   RtmpManager({this.onCreated});
 
   /// 视图加载回调,
-  final VoidCallback onCreated;
+  final VoidCallback? onCreated;
 
   /// 配置
   MethodChannel _configChannel = MethodChannel(DEF_CAMERA_SETTING_CONFIG);
   EventChannel _channel = EventChannel('error_events');
 
   /// premission state
-  bool _permissionEnable;
+  bool? _permissionEnable;
 
   bool get permissionEnable => _permissionEnable ?? false;
 
   /// permission check
-  Future<bool> permissionCheck() async {
-    PermissionHandler pHandler = PermissionHandler();
-    List<PermissionGroup> requestPermission = [];
+  Future<bool?> permissionCheck() async {
+    List<Permission> requestPermission = [];
 
     /// 摄像机
-    if (await pHandler.checkPermissionStatus(PermissionGroup.camera) !=
-        PermissionStatus.granted) {
-      requestPermission.add(PermissionGroup.camera);
+    if (await Permission.camera.request().isGranted) {
+      requestPermission.add(Permission.camera);
     }
 
     /// 文件读写
-    if (await pHandler.checkPermissionStatus(PermissionGroup.storage) !=
-        PermissionStatus.granted) {
+    if (await Permission.storage.request().isGranted) {
       if (defaultTargetPlatform == TargetPlatform.android)
-        requestPermission.add(PermissionGroup.storage);
+        requestPermission.add(Permission.storage);
     }
 
     /// 麦克风
-    if (await pHandler.checkPermissionStatus(PermissionGroup.microphone) !=
-        PermissionStatus.granted) {
-      requestPermission.add(PermissionGroup.microphone);
+    if (await Permission.microphone.request().isGranted) {
+      requestPermission.add(Permission.microphone);
     }
 
     if (requestPermission.length > 0) {
-      Map<PermissionGroup, PermissionStatus> res =
-          await pHandler.requestPermissions(requestPermission);
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.microphone,
+        Permission.camera,
+        Permission.storage,
+      ].request();
+
       bool enable = true;
-      res.forEach((var p, PermissionStatus status) {
+      statuses.forEach((var p, PermissionStatus status) {
         if (status != PermissionStatus.granted) {
           enable = false;
           return;
@@ -84,21 +84,22 @@ class RtmpManager {
 
   Future<RtmpResponse> _didCreated() async {
     if (_statue != RtmpStatue.preparing) return RtmpResponse.faile();
-    Map res;
+    Map? res;
     try {
       res = await _configChannel.invokeMethod("initConfig", config.toMap());
     } catch (e) {}
 
-    if (onCreated != null) onCreated();
+    if (onCreated != null) onCreated!();
     return RtmpResponse.fromData(res ?? {});
   }
 
   /// 开始直播
   Future<RtmpResponse> startLiveStream(
-      {@required String url, @required RTMPListener listener}) async {
+      {required String url, required RTMPListener listener}) async {
     if (_statue == RtmpStatue.living) return RtmpResponse.succeed();
     RtmpResponse res = RtmpResponse.fromData(
-        await _configChannel.invokeMethod("startLive", {"url": url}));
+        await (_configChannel.invokeMethod("startLive", {"url": url})
+            as FutureOr<Map<dynamic, dynamic>>));
     if (res.isOk) {
       _statue = RtmpStatue.living;
     }
@@ -111,7 +112,7 @@ class RtmpManager {
     if (_statue == RtmpStatue.pause || _statue == RtmpStatue.stop)
       return RtmpResponse.succeed();
     RtmpResponse res = RtmpResponse.fromData(
-        await _configChannel.invokeMethod("stopLive", {}));
+        await (_configChannel.invokeMethod("stopLive", {})));
     if (res.isOk) {
       _statue = RtmpStatue.stop;
     }
@@ -123,26 +124,26 @@ class RtmpManager {
     _platformView = null;
     _globalKey = null;
     return RtmpResponse.fromData(
-        await _configChannel.invokeMethod("dispose", {}));
+        await (_configChannel.invokeMethod("dispose", {})));
   }
 
   ///切换摄像头
   Future<RtmpResponse> switchCamera() async {
     return RtmpResponse.fromData(
-        await _configChannel.invokeMethod("switchCamera", {}));
+        await (_configChannel.invokeMethod("switchCamera", {})));
   }
 
   Future<RtmpResponse> startCamera() async {
     return RtmpResponse.fromData(
-        await _configChannel.invokeMethod("startCamera", {}));
+        await (_configChannel.invokeMethod("startCamera", {})));
   }
 
   /// 获取摄像头分辨率
   @deprecated
-  Future<double> cameraRatio() async {
+  Future<double?> cameraRatio() async {
     try {
       RtmpResponse res = RtmpResponse.fromData(
-          await _configChannel.invokeMethod("cameraRatio", {}));
+          await (_configChannel.invokeMethod("cameraRatio", {})));
       if (res.isOk) {
         String ratio = res.oridata['ratio'];
         double width = double.parse(ratio.split("*")[1]);
@@ -156,8 +157,8 @@ class RtmpManager {
     }
   }
 
-  GlobalKey _globalKey = GlobalKey();
-  Widget _platformView;
+  GlobalKey? _globalKey = GlobalKey();
+  Widget? _platformView;
 
   Widget view() {
     if (_platformView == null) {

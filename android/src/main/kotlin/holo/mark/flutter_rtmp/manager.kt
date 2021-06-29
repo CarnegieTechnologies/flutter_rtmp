@@ -7,7 +7,7 @@ import android.hardware.Camera
 import android.util.Log
 import android.view.View
 import com.github.faucamp.simplertmp.RtmpHandler
-import holo.mark.flutter_rtmp.FlutterRtmpPlugin.Companion.registrar
+import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -22,14 +22,18 @@ import net.ossrs.yasea.SrsRecordHandler
 import java.io.IOException
 import java.net.SocketException
 
-class RtmpFactory : PlatformViewFactory(StandardMessageCodec()) {
+class RtmpFactory(private var binding: FlutterPlugin.FlutterPluginBinding) : PlatformViewFactory(StandardMessageCodec()) {
+
     override fun create(context: Context?, viewId: Int, args: Any?): PlatformView {
-        return RtmpView(context)
+        return RtmpView(context, binding)
     }
 }
 
-class RtmpView(private var context: Context?) : PlatformView {
+class RtmpView(private var context: Context?, private var binding: FlutterPlugin.FlutterPluginBinding) : PlatformView {
+
+
     private var manager: RtmpManager? = null
+
 
     override fun dispose() {
         if (manager != null) {
@@ -40,13 +44,13 @@ class RtmpView(private var context: Context?) : PlatformView {
 
     override fun getView(): View {
         if (manager == null) {
-            manager = RtmpManager(context)
+            manager = RtmpManager(context, binding)
         }
         return manager?.getView() ?: View(context)
     }
 }
 
-class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
+class RtmpManager(context: Context?, binding: FlutterPlugin.FlutterPluginBinding) : MethodChannel.MethodCallHandler,
         SrsEncodeHandler.SrsEncodeListener, RtmpHandler.RtmpListener,
         SrsRecordHandler.SrsRecordListener, EventChannel.StreamHandler {
 
@@ -58,15 +62,17 @@ class RtmpManager(context: Context?) : MethodChannel.MethodCallHandler,
     private var hasConfig: Boolean = false
     private var eventsStream: EventChannel.EventSink? = null
     private val listeners: Map<Object, Runnable> = HashMap()
+    private lateinit var binding: FlutterPlugin.FlutterPluginBinding
 
     init {
         this.context = context
         cameraView = SrsCameraView(context)
         cameraView?.cameraId = 1
         initPublisher()
-        MethodChannel(registrar.messenger(), DEF_CAMERA_SETTING_CONFIG)
+        this.binding = binding
+        MethodChannel(binding.binaryMessenger, DEF_CAMERA_SETTING_CONFIG)
                 .setMethodCallHandler(this)
-        EventChannel(registrar.messenger(), DEF_ERROR_EVENTS).setStreamHandler(this)
+        EventChannel(binding.binaryMessenger, DEF_ERROR_EVENTS).setStreamHandler(this)
     }
 
     private fun initPublisher() {
