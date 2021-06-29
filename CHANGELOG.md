@@ -29,3 +29,6 @@ class _MyAppState extends State<MyApp> {
   
 }
 ```
+
+## 0.3.0
+* Migrated to null safety
