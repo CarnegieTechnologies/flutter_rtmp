@@ -30,6 +30,8 @@ flutter:
       android:
         package: holo.mark.flutter_rtmp
         pluginClass: FlutterRtmpPlugin
+      ios:
+        pluginClass: FlutterRtmpPlugin
 
 
 
