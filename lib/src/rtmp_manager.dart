@@ -30,7 +30,7 @@ class RtmpManager {
   EventChannel _channel = EventChannel('error_events');
 
   /// premission state
-  bool? _permissionEnable;
+  bool? _permissionEnable = false;
 
   bool get permissionEnable => _permissionEnable ?? false;
 
@@ -40,40 +40,16 @@ class RtmpManager {
 
     /// 摄像机
     if (await Permission.camera.request().isGranted) {
-      requestPermission.add(Permission.camera);
-    }
-
-    /// 文件读写
-    if (await Permission.storage.request().isGranted) {
-      if (defaultTargetPlatform == TargetPlatform.android)
-        requestPermission.add(Permission.storage);
-    }
-
-    /// 麦克风
-    if (await Permission.microphone.request().isGranted) {
-      requestPermission.add(Permission.microphone);
-    }
-
-    if (requestPermission.length > 0) {
-      Map<Permission, PermissionStatus> statuses = await [
-        Permission.microphone,
-        Permission.camera,
-        Permission.storage,
-      ].request();
-
-      bool enable = true;
-      statuses.forEach((var p, PermissionStatus status) {
-        if (status != PermissionStatus.granted) {
-          enable = false;
-          return;
+      if (await Permission.storage.request().isGranted) {
+        if (await Permission.microphone.request().isGranted) {
+          _permissionEnable = true;
         }
-      });
-      _permissionEnable = enable;
-      return _permissionEnable;
-    } else {
-      _permissionEnable = true;
-      return _permissionEnable;
+      }
     }
+
+
+    return _permissionEnable;
+
   }
 
   /// 配置
@@ -98,8 +74,7 @@ class RtmpManager {
       {required String url, required RTMPListener listener}) async {
     if (_statue == RtmpStatue.living) return RtmpResponse.succeed();
     RtmpResponse res = RtmpResponse.fromData(
-        await (_configChannel.invokeMethod("startLive", {"url": url})
-            as FutureOr<Map<dynamic, dynamic>>));
+        await _configChannel.invokeMethod("startLive", {"url": url}));
     if (res.isOk) {
       _statue = RtmpStatue.living;
     }

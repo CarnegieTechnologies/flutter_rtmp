@@ -16,9 +16,9 @@
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
     
     RtmpViewManager *manager = RtmpViewManager.new;
-    [registrar registerViewFactory:[RtmpViewFactory factoryWithManager:manager] withId:DEF_CAMERA_RTMP_VIEW];
+    [registrar registerViewFactory:[RtmpViewFactory factoryWithManager:manager] withId: DEF_CAMERA_RTMP_VIEW];
     
-    [[FlutterMethodChannel methodChannelWithName:DEF_CAMERA_SETTING_CONFIG binaryMessenger:registrar.messenger] setMethodCallHandler:^(FlutterMethodCall * _Nonnull call, FlutterResult  _Nonnull result) {
+    [[FlutterMethodChannel methodChannelWithName: DEF_CAMERA_SETTING_CONFIG binaryMessenger:registrar.messenger] setMethodCallHandler:^(FlutterMethodCall * _Nonnull call, FlutterResult  _Nonnull result) {
         [manager handleMethod:call result:result];
     }];
     [manager registLivingStatueCallback:registrar.messenger];
